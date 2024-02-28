@@ -13,9 +13,6 @@
  * @dev This smart contract includes features for minting content, setting dynamic pricing,
  * managing metadata, withdrawing funds, deactivating content, and more.
  *
- * @notice The contract is part of the COTEX project founded by Jaeden Hero, who also serves
- * as the lead software engineer. For more information and updates, visit [COTEX Website].
- * Feel free to contact Jaeden Hero at [jd.hero@live.com] for inquiries and support.
  */
 
 
@@ -33,6 +30,7 @@ contract ContentToken is ERC20 {
     address public owner;
 
     using Math for uint256;
+    uint256 public totalContents;
 
     struct Content {
         uint256 id;
@@ -40,20 +38,19 @@ contract ContentToken is ERC20 {
         string description;
         uint256 cost;
         uint256 shares;
-        uint256 sharesAmount;
         address creator;
         uint256 createdTimestamp;
         uint256 updatedTimestamp;
     }
 
+    mapping(uint256 => Content) public content;
+    mapping(uint256 => address) public contentOwners;
+
      modifier onlyOwner() {
         require(msg.sender == owner);
         _;
 
-    }
-
-    mapping(uint256 => Content) public content;
-    mapping(uint256 => address) public contentOwners;
+     }
 
     event ContentCreated(uint256 contentId, address creator);
     event ContentPurchased(uint256 contentId, address buyer, uint256 sharesAmount);
@@ -72,7 +69,7 @@ contract ContentToken is ERC20 {
     ) ERC20(_name, _symbol) {
         _mint(msg.sender, _initialSupply);
         pricePerShare = _pricePerShare;
-        contentOwner = msg.sender;
+        owner = msg.sender;
         totalShares = _initialSupply;
 
     }
@@ -90,11 +87,10 @@ contract ContentToken is ERC20 {
         string memory _description,
         uint256 _cost,
         uint256 _sharesAmount
-    ) external {
-        uint256 newContentId = totalSupply() + 1;
-
-        content[newContentId] = Content({
-            id: newContentId,
+    ) external onlyOwner {
+        totalContents++;
+        content[totalContents] = Content(
+            /* id: newContentId,
             name: _name,
             description: _description,
             cost: _cost,
@@ -102,10 +98,19 @@ contract ContentToken is ERC20 {
             sharesAmount: _sharesAmount,
             creator: msg.sender,
             createdTimestamp: block.timestamp,
-            updatedTimestamp: block.timestamp
-        });
+            updatedTimestamp: block.timestamp */
+            totalContents,
+            _name,
+            _description,
+            _cost,
+            _sharesAmount,
+            msg.sender,
+            block.timestamp,
+            block.timestamp
+        );
+    
 
-        emit ContentCreated(newContentId, msg.sender);
+        //emit ContentCreated(newContentId, msg.sender);
     }
 
     function updateContent(
@@ -114,6 +119,9 @@ contract ContentToken is ERC20 {
         string memory _description,
         uint256 _cost
     ) external onlyOwner {
+        
+        require(msg.sender == content[contentId].creator, "Not the content creator");
+
         Content storage currentContent = content[contentId];
         currentContent.name = _name;
         currentContent.description = _description;
@@ -121,26 +129,34 @@ contract ContentToken is ERC20 {
         currentContent.updatedTimestamp = block.timestamp;
     }
 
-    function purchaseShares(uint256 contentId, uint256 _sharesAmount) external payable {
+    function purchaseShares(uint256 contentId, uint256 _sharesAmount) public payable {
         require(_sharesAmount > 0, "Shares amount must be greater than zero");
-        require(msg.value == _sharesAmount * pricePerShare, "Incorrect ETH value");
+        //require(msg.value == _sharesAmount * pricePerShare, "Incorrect ETH value");
+        require(msg.value >= content[contentId].cost);
         require(totalShares >= _sharesAmount, "Insufficient shares available");
+        
+        uint256 totalCost = (content[contentId].cost) * _sharesAmount;
 
         // Transfer Ether from the buyer to the contract owner
-        payable(contentOwner).transfer(msg.value);
+        payable(owner).transfer(totalCost);
 
         // Transfer existing ownership shares from the contract owner to the buyer
-        _transfer(contentOwner, msg.sender, _sharesAmount);
+        _transfer(owner, msg.sender, _sharesAmount);
 
         // Update ownership details
         contentOwners[contentId] = msg.sender;
         content[contentId].shares -= _sharesAmount;
-        content[contentId].sharesAmount -= _sharesAmount;
 
         emit ContentPurchased(contentId, msg.sender, _sharesAmount);
     }
 
+
+
     receive() external payable {
         // Fallback function to receive ETH
+
+
+
+
     }
 }
