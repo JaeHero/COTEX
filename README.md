@@ -16,7 +16,8 @@ Leveraging blockchain technology, COTEX allows users to invest in and become sta
 <h2>Getting Started</h2>
 To get started with COTEX, follow these steps:
 <ol>
-  <li>Clone the Repository: Clone this GitHub repository to your local machine.</li>
+  <li>Clone the Repository: Clone this GitHub repository to your local machine. 
+  https://github.com/JaeHero/COTEX.git</li>
   <li>Install dependencies: Navigate to the project directory and install the required dependencies.</li>
   cd cotex<br>npm install
   <li>Compile Contracts: Compile the smart contracts using Hardhat.</li>
