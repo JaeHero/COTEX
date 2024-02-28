@@ -1,5 +1,5 @@
 <h1>COTEX : Content Ownership Token Exchange</h1>
-COTEX is a decentralized platform for tokenizing viral online content, enabling users to own and trade fractional shares of popular digital content.
+COTEX is a decentralized platform for tokenizing online content, enabling users to own and trade fractional shares of popular digital content.
 Leveraging blockchain technology, COTEX allows users to invest in and become stakeholders in the success of digital content, while providing creators with new avenues for monetization.
 
 <h2>Features</h2>
