@@ -1,25 +1,2 @@
-<div class="flex justify-center items-center min-h-screen">
-  <div class="card w-96 bg-base-100 card-lg shadow-sm bg-sky-700">
-    <div class="card-body">
-      <h2 class="card-title text-white text-2xl font-bold justify-center">
-        COTEX
-      </h2>
-      <p class="text-white text-center">Content Ownership Token Exchange</p>
-      <div class="justify-center card-actions mt-2">
-        <button
-          class="btn bg-orange-600 text-white border-none hover:bg-orange-700"
-          (click)="onConnect()"
-          [disabled]="account"
-        >
-          {{
-            account
-              ? account.substring(0, 6) +
-                "…" +
-                account.substring(account.length - 4)
-              : "Connect MetaMask"
-          }}
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
+<app-header></app-header>
+<router-outlet></router-outlet>
