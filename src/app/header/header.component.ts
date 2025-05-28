@@ -14,18 +14,17 @@ export class HeaderComponent {
   account: string | null = null;
 
   async ngOnInit() {
-    this.mm.account$.subscribe((acc) => {
-      this.account = acc;
-      if (!acc) {
-        console.warn('MetaMask disconnected or locked');
-      }
-    });
-
-    await this.getBalance();
+    // this.mm.account$.subscribe((acc) => {
+    //   this.account = acc;
+    //   if (!acc) {
+    //     console.warn('MetaMask disconnected or locked');
+    //   }
+    // });
+    // await this.getBalance();
   }
 
   onConnect() {
-    this.mm.connect().catch((err) => console.error(err));
+    this.mm.connectToMetaMaskWallet().catch((err) => console.error(err));
   }
 
   async getBalance() {
