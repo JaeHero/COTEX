@@ -1,4 +1,6 @@
-import { Component } from '@angular/core';
+// src/app/header/header.component.ts
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { MetamaskService } from '../services/metamask.service';
 import { ethers } from 'ethers';
 
@@ -7,33 +9,36 @@ import { ethers } from 'ethers';
   standalone: true,
   imports: [],
   templateUrl: './header.component.html',
-  styleUrl: './header.component.css',
+  styleUrls: ['./header.component.css'],
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit, OnDestroy {
+  address?: string;
+  private signerSub?: Subscription;
+
   constructor(private mm: MetamaskService) {}
-  account: string | null = null;
 
-  async ngOnInit() {
-    // this.mm.account$.subscribe((acc) => {
-    //   this.account = acc;
-    //   if (!acc) {
-    //     console.warn('MetaMask disconnected or locked');
-    //   }
-    // });
-    // await this.getBalance();
+  ngOnInit(): void {
+    // Subscribe to all signer changes, incl. rehydrates and account switches
+    this.signerSub = this.mm.getSigner().subscribe(async (s) => {
+      if (s) {
+        this.address = await s.getAddress();
+        console.log('Updated address:', this.address);
+      } else {
+        this.address = undefined;
+        console.log('Signer disconnected');
+      }
+    });
   }
 
-  onConnect() {
-    this.mm.connectToMetaMaskWallet().catch((err) => console.error(err));
+  ngOnDestroy(): void {
+    this.signerSub?.unsubscribe();
   }
 
-  async getBalance() {
-    const provider = new ethers.JsonRpcProvider(
-      `https://mainnet.infura.io/v3/638285737a5049bd9d5a571261b0ba8b`
-    );
-    const balance = await provider.getBalance(
-      '0x68416deBc20D13e5Ef694CdCaC9506F4C1A20184'
-    );
-    console.log(`ETH Balance is ${ethers.formatEther(balance)} ETH`);
+  async onConnect(): Promise<void> {
+    try {
+      await this.mm.connectToMetaMaskWallet();
+    } catch (err) {
+      console.error('MetaMask connect error', err);
+    }
   }
 }

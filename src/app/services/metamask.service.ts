@@ -13,25 +13,30 @@ declare global {
 
 @Injectable({ providedIn: 'root' })
 export class MetamaskService {
-  private provider: ethers.BrowserProvider | undefined;
-  private signer: BehaviorSubject<ethers.Signer | undefined> =
-    new BehaviorSubject<ethers.Signer | undefined>(undefined);
+  private provider?: ethers.BrowserProvider;
+  private signerSubject = new BehaviorSubject<ethers.Signer | undefined>(
+    undefined
+  );
 
   constructor(private ngZone: NgZone) {
     if (typeof window.ethereum !== 'undefined') {
       this.provider = new ethers.BrowserProvider(
         window.ethereum as ethers.Eip1193Provider
       );
-      this.provider.getSigner().then((signer) => this.signer.next(signer));
-
-      // Listen for changes in MetaMask accounts
+      // Rehydrate existing session without popup
+      this.provider.listAccounts().then((accounts) => {
+        if (accounts.length > 0) {
+          this.provider
+            ?.getSigner()
+            .then((signer) => this.signerSubject.next(signer));
+        }
+      });
+      // Detect account changes
       window.ethereum.on('accountsChanged', (accounts: string[]) => {
         this.ngZone.run(() => {
           if (accounts.length === 0) {
-            // MetaMask disconnected or switched accounts
             this.handleMetaMaskDisconnect();
           } else {
-            // MetaMask accounts changed
             this.handleMetaMaskAccountsChanged(accounts);
           }
         });
@@ -44,7 +49,7 @@ export class MetamaskService {
   private handleMetaMaskDisconnect() {
     console.log('MetaMask disconnected.');
     this.provider = undefined;
-    this.signer.next(undefined);
+    this.signerSubject.next(undefined);
   }
 
   private async handleMetaMaskAccountsChanged(accounts: string[]) {
@@ -53,28 +58,25 @@ export class MetamaskService {
       window.ethereum as ethers.Eip1193Provider
     );
     const signer = await this.provider.getSigner();
-    this.signer.next(signer);
+    this.signerSubject.next(signer);
   }
 
-  async connectToMetaMaskWallet() {
+  async connectToMetaMaskWallet(): Promise<void> {
     if (typeof window.ethereum !== 'undefined') {
-      // Request access to the user's MetaMask account
       await window.ethereum.request({ method: 'eth_requestAccounts' });
-
-      // Connect to MetaMask using the Web3Provider
-      this.provider = new ethers.BrowserProvider(window.ethereum);
+      this.provider = new ethers.BrowserProvider(
+        window.ethereum as ethers.Eip1193Provider
+      );
       const signer = await this.provider.getSigner();
-      this.signer.next(signer);
-
-      const address = await this.signer.getValue()!.getAddress();
-
+      this.signerSubject.next(signer);
+      const address = await signer.getAddress();
       console.log('Connected to MetaMask with address:', address);
     } else {
       console.error('MetaMask is not installed.');
     }
   }
 
-  getSigner() {
-    return this.signer.getValue();
+  getSigner(): Observable<ethers.Signer | undefined> {
+    return this.signerSubject.asObservable();
   }
 }
